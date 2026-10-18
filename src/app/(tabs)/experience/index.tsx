@@ -1,16 +1,17 @@
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { EXPERIENCE } from '@/data';
+import { useContent } from '@/content';
 import { useColors } from '@/theme';
 import { s, Screen, T } from '@/ui';
 
 export default function Experience() {
   const c = useColors();
+  const { experience } = useContent().content;
   return (
     <Screen>
       <View style={{ marginTop: 28, borderTopWidth: StyleSheet.hairlineWidth, borderColor: c.line2 }}>
-        {EXPERIENCE.map(([yr, role, company]) => (
+        {experience.map(({ years: yr, role, company }) => (
           <View key={role + company} style={[styles.row, { borderColor: c.line2 }]}>
             <T style={[s.yr, { width: 100, color: c.muted }]}>{yr}</T>
             <View style={{ flex: 1, gap: 4 }}>

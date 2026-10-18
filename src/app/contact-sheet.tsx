@@ -5,14 +5,16 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { openUrl } from '@/components/menus';
-import { LINKS } from '@/data';
+import { useContent } from '@/content';
 import { font, useColors } from '@/theme';
-import { Label, PulseDot, T, turinTime, useNow } from '@/ui';
+import { Label, localTime, PulseDot, T, useNow } from '@/ui';
 
 /** "Get in touch" sheet, opened from Status on Home. Native form sheet: drag down to dismiss. */
 export default function ContactSheet() {
   const c = useColors();
   const now = useNow();
+  const { profile, links } = useContent().content;
+  const mail = links.find((l) => l.href.startsWith('mailto:'));
   const insets = useSafeAreaInsets();
   return (
     <View style={{ paddingTop: 7, paddingBottom: Math.max(22, insets.bottom) }}>
@@ -25,12 +27,12 @@ export default function ContactSheet() {
       <View style={styles.status}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <PulseDot />
-          <T style={{ fontSize: 15 }}>Open to new roles</T>
+          <T style={{ fontSize: 15 }}>{profile.status}</T>
         </View>
-        <T style={{ fontFamily: font.mono, fontSize: 12, color: c.muted }}>Turin {turinTime(now).slice(0, 5)}</T>
+        <T style={{ fontFamily: font.mono, fontSize: 12, color: c.muted }}>{profile.city} {localTime(now, profile.timeZone).slice(0, 5)}</T>
       </View>
       <View style={[styles.group, { backgroundColor: c.fill }]}>
-        {LINKS.map((l, i) => (
+        {links.map((l, i) => (
           <Pressable
             key={l.label}
             onPress={() => openUrl(l.href)}
@@ -41,11 +43,13 @@ export default function ContactSheet() {
           </Pressable>
         ))}
       </View>
-      <Pressable onPress={() => openUrl(LINKS[0].href)} style={{ marginTop: 16, marginHorizontal: 12 }}>
-        <GlassView isInteractive glassEffectStyle="regular" tintColor={c.accent} style={styles.cta}>
-          <T style={{ fontFamily: font.semibold, fontSize: 16, color: c.onAccent }}>Email me</T>
-        </GlassView>
-      </Pressable>
+      {mail ? (
+        <Pressable onPress={() => openUrl(mail.href)} style={{ marginTop: 16, marginHorizontal: 12 }}>
+          <GlassView isInteractive glassEffectStyle="regular" tintColor={c.accent} style={styles.cta}>
+            <T style={{ fontFamily: font.semibold, fontSize: 16, color: c.onAccent }}>Email me</T>
+          </GlassView>
+        </Pressable>
+      ) : null}
     </View>
   );
 }

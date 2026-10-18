@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { ContentProvider } from '@/content';
 import { font, palette, ThemeProvider } from '@/theme';
 import { ToastProvider } from '@/ui';
 
@@ -17,7 +18,9 @@ export default function RootLayout() {
   if (!loaded) return null;
   return (
     <ThemeProvider>
-      <Navigation />
+      <ContentProvider>
+        <Navigation />
+      </ContentProvider>
     </ThemeProvider>
   );
 }

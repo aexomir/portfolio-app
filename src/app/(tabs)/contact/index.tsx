@@ -2,17 +2,18 @@ import { Link } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { copyMenu } from '@/components/menus';
-import { LINKS } from '@/data';
+import { useContent } from '@/content';
 import { useColors } from '@/theme';
 import { Label, Screen, T, useToast } from '@/ui';
 
 export default function Contact() {
   const c = useColors();
   const toast = useToast();
+  const { content } = useContent();
   return (
     <Screen>
       <View style={{ marginTop: 36, borderTopWidth: StyleSheet.hairlineWidth, borderColor: c.line2 }}>
-        {LINKS.map((l) => (
+        {content.links.map((l) => (
           <Link key={l.label} href={l.href as `https://${string}`} asChild>
             <Link.Trigger>
               <Pressable style={StyleSheet.flatten([styles.row, { borderColor: c.line2 }])}>
@@ -26,7 +27,7 @@ export default function Contact() {
         ))}
       </View>
       <View style={styles.foot}>
-        <Label style={styles.footText}>© 2026 Amir Ranjbar</Label>
+        <Label style={styles.footText}>© {new Date().getFullYear()} {content.profile.name}</Label>
         <Label style={styles.footText}>Hosted on GitHub Pages</Label>
       </View>
     </Screen>

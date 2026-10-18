@@ -6,6 +6,7 @@ import { RefreshControl, ScrollView, StyleSheet, Text, View, type NativeScrollEv
 import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useContent } from '@/content';
 import { font, useColors } from '@/theme';
 
 /** Mono uppercase label, the site's `.lbl`. */
@@ -53,10 +54,10 @@ export function useNow() {
   return now;
 }
 
-export const turinTime = (d: Date) => d.toLocaleTimeString('en-GB', { timeZone: 'Europe/Rome', hour12: false });
-export function turinZone(d: Date) {
+export const localTime = (d: Date, timeZone: string) => d.toLocaleTimeString('en-GB', { timeZone, hour12: false });
+export function zoneName(d: Date, timeZone: string) {
   try {
-    return new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Rome', timeZoneName: 'short' }).formatToParts(d).find((p) => p.type === 'timeZoneName')?.value ?? '';
+    return new Intl.DateTimeFormat('en-GB', { timeZone, timeZoneName: 'short' }).formatToParts(d).find((p) => p.type === 'timeZoneName')?.value ?? '';
   } catch {
     return '';
   }
@@ -78,14 +79,17 @@ export function useScrollTitle(title: string, threshold: number) {
   }, [set, threshold]);
 }
 
-/** Scroll container for every tab: native large-title insets plus pull to refresh. */
+/** Scroll container for every tab: native large-title insets plus pull to refresh, which re-downloads the content. */
 export function Screen({ children, contentContainerStyle, ...props }: ScrollViewProps & { children: ReactNode }) {
   const c = useColors();
   const toast = useToast();
+  const { refresh } = useContent();
   const [refreshing, setRefreshing] = useState(false);
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => { setRefreshing(false); toast('Up to date'); }, 1100);
+    const result = await refresh();
+    setRefreshing(false);
+    toast({ updated: 'Updated', unchanged: 'Up to date', failed: 'Couldn’t refresh, showing saved copy' }[result]);
   };
   return (
     <ScrollView

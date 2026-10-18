@@ -3,7 +3,7 @@ import { Link } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { Linking, Share } from 'react-native';
 
-import type { Project } from '@/data';
+import type { Project } from '@/content';
 type Toast = (msg: string) => void;
 
 export const openUrl = (href: string) =>
@@ -15,18 +15,18 @@ export const openUrl = (href: string) =>
 export function projectMenu(p: Project, toast: Toast) {
   return (
     <Link.Menu>
-      {p.repo ? <Link.MenuAction title="Open on GitHub" icon="arrow.up.right.square" onPress={() => openUrl(p.repo!)} /> : null}
+      {p.repo ? <Link.MenuAction title="Open on GitHub" icon="arrow.up.right.square" onPress={() => openUrl(p.repo)} /> : null}
       {p.repo ? (
         <Link.MenuAction
           title="Copy link"
           icon="link"
-          onPress={async () => { await Clipboard.setStringAsync(p.repo!); toast('Link copied'); }}
+          onPress={async () => { await Clipboard.setStringAsync(p.repo); toast('Link copied'); }}
         />
       ) : null}
       <Link.MenuAction
         title="Share"
         icon="square.and.arrow.up"
-        onPress={() => Share.share({ message: p.repo ? `${p.name}: ${p.repo}` : p.name, url: p.repo ?? undefined })}
+        onPress={() => Share.share({ message: p.repo ? `${p.name}: ${p.repo}` : p.name, url: p.repo || undefined })}
       />
     </Link.Menu>
   );
