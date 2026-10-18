@@ -21,6 +21,7 @@ export default function ProjectDetail() {
   const onScroll = useScrollTitle(p?.name ?? '', 90);
   const line = { borderColor: c.line2, borderBottomWidth: StyleSheet.hairlineWidth };
   if (!p) return null; // every project was deleted
+  const repo = p.repo;
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
@@ -54,13 +55,13 @@ export default function ProjectDetail() {
       <View style={[styles.bar, { bottom: insets.bottom + 8 }]} pointerEvents="box-none">
         <Pressable
           accessibilityLabel="Share"
-          onPress={() => Share.share({ message: p.repo ? `${p.name}: ${p.repo}` : p.name, url: p.repo || undefined })}>
+          onPress={() => Share.share({ message: repo ? `${p.name}: ${repo}` : p.name, url: repo || undefined })}>
           <GlassView isInteractive glassEffectStyle="regular" style={styles.round}>
             <SymbolView name="square.and.arrow.up" size={20} tintColor={c.ink} />
           </GlassView>
         </Pressable>
-        {p.repo ? (
-          <Pressable onPress={() => openUrl(p.repo)}>
+        {repo ? (
+          <Pressable onPress={() => openUrl(repo)}>
             <GlassView isInteractive glassEffectStyle="regular" tintColor={c.accent} style={styles.pill}>
               <T style={{ fontFamily: font.semibold, fontSize: 16, color: c.onAccent }}>View on GitHub ↗</T>
             </GlassView>

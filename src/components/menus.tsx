@@ -13,20 +13,21 @@ export const openUrl = (href: string) =>
 
 /** Native context menu actions for a project row (press and hold). */
 export function projectMenu(p: Project, toast: Toast) {
+  const repo = p.repo;
   return (
     <Link.Menu>
-      {p.repo ? <Link.MenuAction title="Open on GitHub" icon="arrow.up.right.square" onPress={() => openUrl(p.repo)} /> : null}
-      {p.repo ? (
+      {repo ? <Link.MenuAction title="Open on GitHub" icon="arrow.up.right.square" onPress={() => openUrl(repo)} /> : null}
+      {repo ? (
         <Link.MenuAction
           title="Copy link"
           icon="link"
-          onPress={async () => { await Clipboard.setStringAsync(p.repo); toast('Link copied'); }}
+          onPress={async () => { await Clipboard.setStringAsync(repo); toast('Link copied'); }}
         />
       ) : null}
       <Link.MenuAction
         title="Share"
         icon="square.and.arrow.up"
-        onPress={() => Share.share({ message: p.repo ? `${p.name}: ${p.repo}` : p.name, url: p.repo || undefined })}
+        onPress={() => Share.share({ message: repo ? `${p.name}: ${repo}` : p.name, url: repo || undefined })}
       />
     </Link.Menu>
   );

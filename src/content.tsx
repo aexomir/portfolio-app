@@ -12,14 +12,14 @@ export type Project = {
   type: 'Apps' | 'Research' | 'Open Source';
   year: string;
   summary: string;
-  repo: string;
-  facts: { label: string; value: string }[];
+  repo?: string | null;
+  facts?: { label: string; value: string }[];
 };
 export type Content = {
   profile: { name: string; title: string; description: string; intro: string; currently: string; city: string; timeZone: string; status: string };
   projects: Project[];
   experience: { years: string; role: string; company: string }[];
-  certificates: { name: string; issuer: string; year: string; url: string }[];
+  certificates: { name: string; issuer: string; year: string; url?: string | null }[];
   links: { label: string; value: string; href: string }[];
 };
 
@@ -27,6 +27,8 @@ export const TYPES: Project['type'][] = ['Apps', 'Research', 'Open Source'];
 export const kicker = (p: Project) => `${p.type === 'Apps' ? 'App' : p.type} · ${p.year}`;
 
 const str = (v: unknown) => typeof v === 'string' && v.trim().length > 0;
+// Pages CMS may drop an empty optional field or save it as null.
+const optional = (v: unknown) => v == null || typeof v === 'string';
 const all = (list: unknown, keys: string[]) =>
   Array.isArray(list) && list.every((item) => item && keys.every((k) => str((item as Record<string, unknown>)[k])));
 
@@ -37,10 +39,10 @@ export function isContent(c: unknown): c is Content {
     !!x &&
     ['name', 'title', 'intro', 'currently', 'city', 'timeZone', 'status'].every((k) => str((x.profile as Record<string, unknown>)?.[k])) &&
     all(x.projects, ['slug', 'name', 'type', 'year', 'summary']) &&
-    x.projects.every((p) => TYPES.includes(p.type) && typeof p.repo === 'string' && all(p.facts ?? [], ['label', 'value'])) &&
+    x.projects.every((p) => TYPES.includes(p.type) && optional(p.repo) && all(p.facts ?? [], ['label', 'value'])) &&
     all(x.experience, ['years', 'role', 'company']) &&
     all(x.certificates, ['name', 'issuer', 'year']) &&
-    x.certificates.every((cert) => typeof cert.url === 'string') &&
+    x.certificates.every((cert) => optional(cert.url)) &&
     all(x.links, ['label', 'value', 'href'])
   );
 }
