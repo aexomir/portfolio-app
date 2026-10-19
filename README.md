@@ -113,9 +113,22 @@ Before an App Store build, refresh the bundled copy:
 npm run sync-content
 ```
 
-## Ship to TestFlight
+## App status and feature switches
 
-```bash
-npx eas-cli@latest build --platform ios --profile production
-npx eas-cli@latest submit --platform ios
-```
+The `app` section of `content.json` controls the app without a release: a **maintenance banner** at the top of every screen, a **new-version notice** for anyone older than *Latest app version*, and **feature switches** for the name wave, the Get in touch sheet and the live clock. Anything missing falls back to "everything on, no banners".
+
+## Pipeline setup (one-time)
+
+The **Publish app update** and **Build for TestFlight** buttons in Pages CMS run workflows in [aexomir/aexomir.github.io](https://github.com/aexomir/aexomir.github.io) that check out this repo and call EAS. They need, once:
+
+1. **An Expo project.** Run `npx eas-cli@latest login`, then `npx eas-cli@latest init` and `npx eas-cli@latest update:configure` in this folder. Commit the changes to `app.json`.
+2. **An `EXPO_TOKEN` secret.** Create a token at expo.dev (Account settings → Access tokens), then add it to the site repo with `gh secret set EXPO_TOKEN --repo aexomir/aexomir.github.io` and paste it when asked.
+3. **Apple credentials.** Run the first build yourself, so EAS can set up the certificate and provisioning profile and ask for the App Store Connect app:
+
+   ```bash
+   npx eas-cli@latest build --platform ios --profile production --auto-submit
+   ```
+
+   After that, CI builds run without questions.
+
+`expo-updates` is installed, with `runtimeVersion` set to the app version. An update reaches only builds with the same version, so bump `version` in `app.json` (and build for TestFlight) whenever native code changes.

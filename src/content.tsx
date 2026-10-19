@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import { File, Paths } from 'expo-file-system';
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 
@@ -21,7 +22,16 @@ export type Content = {
   experience: { years: string; role: string; company: string }[];
   certificates: { name: string; issuer: string; year: string; url?: string | null }[];
   links: { label: string; value: string; href: string }[];
+  app?: AppStatus;
 };
+export type AppStatus = {
+  maintenance?: { enabled?: boolean; message?: string };
+  latestVersion?: string;
+  updateMessage?: string;
+  updateUrl?: string | null;
+  features?: Partial<Record<Feature, boolean>>;
+};
+export type Feature = 'nameWave' | 'contactSheet' | 'liveClock';
 
 export const TYPES: Project['type'][] = ['Apps', 'Research', 'Open Source'];
 export const kicker = (p: Project) => `${p.type === 'Apps' ? 'App' : p.type} · ${p.year}`;
@@ -43,7 +53,8 @@ export function isContent(c: unknown): c is Content {
     all(x.experience, ['years', 'role', 'company']) &&
     all(x.certificates, ['name', 'issuer', 'year']) &&
     x.certificates.every((cert) => optional(cert.url)) &&
-    all(x.links, ['label', 'value', 'href'])
+    all(x.links, ['label', 'value', 'href']) &&
+    (x.app == null || typeof x.app === 'object')
   );
 }
 
@@ -93,3 +104,29 @@ export function ContentProvider({ children }: { children: ReactNode }) {
 }
 
 export const useContent = () => useContext(ContentContext);
+
+/** -1, 0 or 1 for dotted versions like 1.2.0. Missing parts count as 0. */
+export function compareVersions(a: string, b: string) {
+  const pa = a.split('.').map(Number), pb = b.split('.').map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] || 0) - (pb[i] || 0);
+    if (d) return Math.sign(d);
+  }
+  return 0;
+}
+if (compareVersions('1.10.0', '1.9.2') !== 1 || compareVersions('1.0', '1.0.0') !== 0) throw new Error('compareVersions is broken');
+
+export const APP_VERSION = Constants.expoConfig?.version ?? '0.0.0';
+
+/** App status from content.json with safe defaults: every feature on, no banners. */
+export function useAppStatus() {
+  const app = useContent().content.app ?? {};
+  const on = (f: Feature) => app.features?.[f] !== false;
+  const maintenance = app.maintenance?.enabled && app.maintenance.message?.trim() ? app.maintenance.message.trim() : null;
+  const updateAvailable = !!app.latestVersion && /^\d+\.\d+\.\d+$/.test(app.latestVersion) && compareVersions(app.latestVersion, APP_VERSION) > 0;
+  return {
+    on,
+    maintenance,
+    update: updateAvailable ? { message: app.updateMessage?.trim() || 'A new version of the app is available.', url: app.updateUrl || null, version: app.latestVersion! } : null,
+  };
+}

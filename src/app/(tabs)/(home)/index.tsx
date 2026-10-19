@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useEffect, useEffectEvent, useRef, useState, type ComponentRef } from 'react';
 import { Pressable, StyleSheet, Text, View, type GestureResponderEvent } from 'react-native';
 
-import { useContent } from '@/content';
+import { useAppStatus, useContent } from '@/content';
 import { font, useColors } from '@/theme';
 import { Chevron, Label, localTime, PulseDot, Screen, T, useNow, useScrollTitle, zoneName } from '@/ui';
 
@@ -12,7 +12,7 @@ const familyFor = (w: number) => WEIGHTS.reduce((best, cur) => (Math.abs(cur[0] 
 const weightAt = (d: number, radius: number) => 300 + 260 * Math.pow(Math.max(0, 1 - d / radius), 2);
 
 /** The name, one word per line, with a bold wave that sweeps out from a point (on load, and wherever you tap). */
-function Hero({ name }: { name: string }) {
+function Hero({ name, wave }: { name: string; wave: boolean }) {
   const c = useColors();
   const lines = name.split(/\s+/);
   const count = lines.join('').length;
@@ -22,6 +22,7 @@ function Hero({ name }: { name: string }) {
   const [weights, setWeights] = useState<number[]>([]);
 
   const ripple = (originX: number) => {
+    if (!wave) return;
     const xs = centers.current.slice(0, count);
     const reach = Math.max(...xs.map((x) => Math.abs(x - originX))) + 80;
     let start: number | undefined;
@@ -76,13 +77,15 @@ export default function Home() {
   const c = useColors();
   const now = useNow();
   const { profile } = useContent().content;
+  const { on } = useAppStatus();
+  const sheet = on('contactSheet');
   const onScroll = useScrollTitle(profile.name, 230);
   const border = { borderBottomWidth: StyleSheet.hairlineWidth, borderColor: c.line2 };
   return (
     <Screen onScroll={onScroll}>
       <View style={{ paddingHorizontal: 20, paddingTop: 26 }}>
         <Label>{profile.title}</Label>
-        <Hero name={profile.name} />
+        <Hero name={profile.name} wave={on('nameWave')} />
         <T style={styles.intro}>
           {profile.intro} See my{' '}
           <Text onPress={() => router.navigate('/projects')} style={{ textDecorationLine: 'underline', textDecorationColor: c.line2 }}>projects</Text>.
@@ -94,20 +97,22 @@ export default function Home() {
           <Label style={styles.statKey}>Currently</Label>
           <T style={{ fontSize: 15 }}>{profile.currently}</T>
         </View>
-        <View style={[styles.stat, border]}>
-          <Label style={styles.statKey}>{profile.city}</Label>
-          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10 }}>
-            <T style={{ fontFamily: font.mono, fontSize: 15 }}>{localTime(now, profile.timeZone)}</T>
-            <Label style={{ letterSpacing: 0 }}>{zoneName(now, profile.timeZone)}</Label>
+        {on('liveClock') ? (
+          <View style={[styles.stat, border]}>
+            <Label style={styles.statKey}>{profile.city}</Label>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10 }}>
+              <T style={{ fontFamily: font.mono, fontSize: 15 }}>{localTime(now, profile.timeZone)}</T>
+              <Label style={{ letterSpacing: 0 }}>{zoneName(now, profile.timeZone)}</Label>
+            </View>
           </View>
-        </View>
-        <Pressable onPress={() => router.push('/contact-sheet')} style={({ pressed }) => [styles.stat, border, pressed && { backgroundColor: c.press }]}>
+        ) : null}
+        <Pressable disabled={!sheet} onPress={() => router.push('/contact-sheet')} style={({ pressed }) => [styles.stat, border, pressed && { backgroundColor: c.press }]}>
           <Label style={styles.statKey}>Status</Label>
           <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <PulseDot />
             <T style={{ fontSize: 15 }}>{profile.status}</T>
           </View>
-          <Chevron />
+          {sheet ? <Chevron /> : null}
         </Pressable>
       </View>
 

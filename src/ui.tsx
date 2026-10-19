@@ -2,11 +2,12 @@ import { GlassView } from 'expo-glass-effect';
 import { useNavigation } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewProps, type TextProps } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewProps, type TextProps } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useContent } from '@/content';
+import { openUrl } from '@/components/menus';
+import { useAppStatus, useContent } from '@/content';
 import { font, useColors } from '@/theme';
 
 /** Mono uppercase label, the site's `.lbl`. */
@@ -99,8 +100,37 @@ export function Screen({ children, contentContainerStyle, ...props }: ScrollView
       contentContainerStyle={[{ paddingBottom: 48 }, contentContainerStyle]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.muted} />}
       {...props}>
+      <Notices />
       {children}
     </ScrollView>
+  );
+}
+
+/** Maintenance banner and new-version notice, both set in Pages CMS under App status. */
+function Notices() {
+  const c = useColors();
+  const { maintenance, update } = useAppStatus();
+  if (!maintenance && !update) return null;
+  return (
+    <View style={{ marginHorizontal: 16, marginTop: 8, gap: 8 }}>
+      {maintenance ? (
+        <View accessibilityRole="alert" style={[s.notice, { backgroundColor: c.fill }]}>
+          <Label>Maintenance</Label>
+          <T style={s.noticeText}>{maintenance}</T>
+        </View>
+      ) : null}
+      {update ? (
+        <Pressable
+          disabled={!update.url}
+          onPress={() => update.url && openUrl(update.url)}
+          accessibilityHint={update.url ? 'Opens the update link' : undefined}
+          style={({ pressed }) => [s.notice, { backgroundColor: c.fill }, pressed && { opacity: 0.7 }]}>
+          <Label>Update · {update.version}</Label>
+          <T style={s.noticeText}>{update.message}</T>
+          {update.url ? <T style={[s.noticeText, { color: c.accent, fontFamily: font.medium }]}>Update ↗</T> : null}
+        </Pressable>
+      ) : null}
+    </View>
   );
 }
 
@@ -146,5 +176,7 @@ export const s = StyleSheet.create({
   yr: { fontFamily: font.mono, fontSize: 12 },
   dot: { width: 6, height: 6, borderRadius: 3 },
   toastWrap: { position: 'absolute', alignSelf: 'center' },
+  notice: { borderRadius: 20, paddingVertical: 14, paddingHorizontal: 16, gap: 6 },
+  noticeText: { fontFamily: font.regular, fontSize: 15, lineHeight: 21 },
   toast: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12, paddingHorizontal: 18, borderRadius: 999, overflow: 'hidden' },
 });
